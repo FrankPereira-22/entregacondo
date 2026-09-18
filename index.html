@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1565c0">
+  <meta name="description" content="EntregaCondo - controle móvel de entregas por alameda">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="EntregaCondo">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>EntregaCondo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f1f3f6; font-family: Arial, sans-serif; color: #222; }
+    header { background: #1565c0; color: #fff; text-align: center; padding: 18px 15px; }
+    header h1 { margin: 0; font-size: 25px; }
+    header p { margin: 5px 0 0; font-size: 14px; }
+    main { width: 100%; max-width: 600px; margin: auto; padding: 10px; }
+    .card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    h2 { margin: 0 0 18px; }
+    .campo { margin-bottom: 15px; }
+    label { display: block; font-weight: 700; margin-bottom: 7px; }
+    select, input, textarea { width: 100%; border: 1px solid #bbb; border-radius: 8px; padding: 10px; font-size: 18px; background: #fff; font-family: inherit; }
+    select, input { height: 52px; }
+    button { border: 0; border-radius: 8px; cursor: pointer; font-weight: 700; touch-action: manipulation; }
+    .btn-adicionar { width: 100%; height: 56px; background: #2e7d32; color: #fff; font-size: 18px; }
+    .btn-adicionar:active, .btn-concluir:active, .btn-tentativa:active, .btn-menor:active { transform: scale(.98); }
+    .resumo { display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; margin-top: 15px; padding: 12px 4px; background: #f7f9fb; border-radius: 10px; }
+    .resumo-item { min-width: 0; padding: 0 3px; }
+    .resumo-numero { font-size: 27px; font-weight: 700; color: #1565c0; }
+    .resumo-legenda { font-size: 13px; color: #555; }
+    .titulo-alameda { background: #1565c0; color: #fff; padding: 12px; border-radius: 8px; font-size: 19px; font-weight: 700; margin-top: 18px; }
+    .entrega { padding: 15px 0; border-bottom: 1px solid #ddd; }
+    .entrega:last-child { border-bottom: 0; }
+    .numero { font-size: 22px; font-weight: 700; }
+    .pacotes { margin-top: 4px; font-size: 16px; color: #555; }
+    .tentativas { margin-top: 5px; color: #e65100; font-size: 15px; font-weight: 700; }
+    .concluida { margin-top: 5px; color: #2e7d32; font-weight: 700; }
+    .acoes { display: flex; gap: 6px; margin-top: 12px; }
+    .btn-menor { width: 48px; height: 48px; color: #fff; font-size: 23px; flex: 0 0 48px; }
+    .btn-menos { background: #d32f2f; }
+    .btn-mais { background: #388e3c; }
+    .btn-tentativa { flex: 1; min-height: 48px; background: #ef6c00; color: #fff; font-size: 14px; padding: 0 10px; }
+    .btn-concluir { width: 100%; min-height: 72px; margin-top: 10px; background: #1565c0; color: #fff; font-size: 21px; padding: 10px; }
+    .btn-reabrir { background: #757575; }
+    .btn-historico { width: 100%; min-height: 44px; margin-top: 9px; background: #eee; color: #333; font-size: 15px; }
+    .btn-observacao { width: 100%; min-height: 42px; margin-top: 9px; background: #e8eef6; color: #263238; font-size: 14px; }
+    .observacao-area { display: none; margin-top: 9px; }
+    .observacao-area.aberto { display: block; }
+    .observacao-campo { min-height: 72px; resize: vertical; font-size: 15px; }
+    .observacao-salva { margin-top: 8px; padding: 9px; background: #fff8e1; border-radius: 7px; color: #5d4037; font-size: 14px; line-height: 1.4; }
+    .historico { display: none; margin-top: 10px; background: #f7f7f7; border-radius: 8px; padding: 10px; }
+    .historico.aberto { display: block; }
+    .historico-titulo { font-weight: 700; margin-bottom: 8px; }
+    .historico-item { padding: 7px 0; border-bottom: 1px solid #ddd; font-size: 14px; }
+    .historico-item:last-child { border-bottom: 0; }
+    .entrega.finalizada { opacity: .58; background: #f7f7f7; padding-left: 10px; padding-right: 10px; border-radius: 8px; }
+    .entrega.finalizada .numero { text-decoration: line-through; }
+    .vazio { text-align: center; color: #777; padding: 25px 10px; }
+    .btn-limpar-concluidas { width: 100%; height: 50px; margin-top: 15px; background: #ef6c00; color: #fff; font-size: 16px; }
+    .btn-limpar { width: 100%; height: 50px; margin-top: 15px; background: #b71c1c; color: #fff; font-size: 16px; }
+    .dica { margin: -6px 0 12px; color: #666; font-size: 13px; }
+    .btn-instalar { display: none; width: 100%; min-height: 50px; margin-bottom: 15px; background: #0d47a1; color: #fff; font-size: 16px; padding: 10px; }
+    .btn-instalar.visivel { display: block; }
+    .historico-concluidas { margin-top: 10px; }
+    .btn-abrir-historico { width: 100%; min-height: 52px; background: #455a64; color: #fff; font-size: 16px; padding: 10px; }
+    .painel-historico { display: block; }
+    .painel-historico.aberto { display: block; }
+    .pesquisa-historico { margin-bottom: 15px; }
+    .conclusao-item { padding: 14px 0; border-bottom: 1px solid #ddd; }
+    .conclusao-item:last-child { border-bottom: 0; }
+    .conclusao-topo { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+    .conclusao-casa { font-size: 18px; font-weight: 700; }
+    .conclusao-alameda { color: #1565c0; font-weight: 700; margin-top: 3px; }
+    .conclusao-meta { margin-top: 6px; color: #555; font-size: 14px; line-height: 1.45; }
+    .conclusao-data { margin-top: 7px; color: #2e7d32; font-weight: 700; font-size: 14px; }
+    .btn-limpar-historico { width: 100%; min-height: 46px; margin-top: 15px; background: #616161; color: #fff; font-size: 15px; }
+    .btn-abrir-area { width: 100%; min-height: 54px; color: #fff; font-size: 16px; padding: 10px; }
+    .btn-tres-tentativas { background: #c62828; }
+    .btn-volumes { background: #6a1b9a; }
+    .painel-area { display: block; }
+    [hidden] { display: none !important; }
+    .navegacao { position: sticky; top: 0; z-index: 10; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 10px 0; background: #f1f3f6; margin-bottom: 12px; }
+    .navegacao button { min-height: 50px; padding: 10px 6px; font-size: 14px; background: #e2e7ed; color: #263238; }
+    .navegacao button[aria-pressed="true"] { background: #1565c0; color: white; box-shadow: inset 0 -4px 0 #083f7f; }
+    .navegacao button:focus-visible { outline: 3px solid #ef6c00; outline-offset: 2px; }
+    .painel-area.aberto { display: block; }
+    .aviso-limite { margin-top: 8px; padding: 9px; border-radius: 7px; background: #ffebee; color: #b71c1c; font-size: 14px; font-weight: 700; }
+    .volume-item { padding: 14px; margin-top: 12px; border: 1px solid #ddd; border-radius: 10px; background: #fafafa; }
+    .volume-item.finalizada { opacity: .65; }
+    .volume-foto { display: block; width: 100%; max-height: 280px; margin-top: 10px; border-radius: 8px; object-fit: contain; background: #eee; }
+    .foto-preview { display: none; width: 100%; max-height: 240px; margin-top: 10px; border-radius: 8px; object-fit: contain; background: #eee; }
+    .foto-preview.visivel { display: block; }
+    .btn-remover { width: 100%; min-height: 44px; margin-top: 9px; background: #b71c1c; color: #fff; font-size: 14px; }
+    .btn-foto { display: block; width: 100%; min-height: 44px; margin-top: 9px; padding: 11px; border-radius: 8px; background: #ede7f6; color: #4a148c; text-align: center; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .volume-data { margin-top: 7px; color: #6a1b9a; font-weight: 700; }
+    @media (max-width: 480px) {
+      main { padding: 8px; }
+      .card { padding: 14px; }
+      .btn-concluir { min-height: 74px; font-size: 21px; }
+      .btn-tentativa { font-size: 13px; }
+      .resumo { grid-template-columns: repeat(2, 1fr); row-gap: 14px; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>📦 EntregaCondo</h1>
+  <p>Controle de entregas</p>
+</header>
+
+<main>
+  <nav class="navegacao" aria-label="Áreas do aplicativo">
+    <button id="btnAbaEntregas" type="button" aria-controls="abaEntregas" aria-pressed="true">📋 Entregas</button>
+    <button id="btnAbrirHistoricoConcluidas" type="button" aria-controls="abaHistorico" aria-pressed="false">📚 Histórico</button>
+    <button id="btnAbrirTresTentativas" type="button" aria-controls="abaTentativas" aria-pressed="false">⚠️ 3 tentativas (0)</button>
+    <button id="btnAbrirVolumes" type="button" aria-controls="abaVolumes" aria-pressed="false">📦 Volumes grandes</button>
+  </nav>
+  <div id="abaEntregas">
+  <button id="btnInstalar" class="btn-instalar" type="button">📲 INSTALAR ENTREGACONDO</button>
+  <section class="card">
+    <h2>➕ Cadastrar entrega</h2>
+
+    <div class="campo">
+      <label for="alameda">Alameda</label>
+      <select id="alameda">
+        <option value="">Selecione a Alameda</option>
+        <option>Amarílis</option>
+        <option>Fênix</option>
+        <option>Plumas</option>
+        <option>Prímulas</option>
+        <option>Caliandras</option>
+        <option>Tulipas</option>
+        <option>Agáves</option>
+        <option>Romãs</option>
+        <option>Seronéas</option>
+        <option>Angelins</option>
+      </select>
+    </div>
+
+    <div class="campo">
+      <label for="numero">Número da residência</label>
+      <input id="numero" type="text" inputmode="numeric" autocomplete="off" enterkeyhint="done" placeholder="Digite o número">
+    </div>
+
+    <div class="campo">
+      <label for="quantidade">Quantidade de pacotes</label>
+      <input id="quantidade" type="number" inputmode="numeric" min="1" step="1" value="1">
+    </div>
+
+    <button class="btn-adicionar" id="btnAdicionar" type="button">➕ ADICIONAR ENTREGA</button>
+  </section>
+
+  <section class="card">
+    <h2>📋 Visualizar entregas</h2>
+
+    <div class="campo">
+      <label for="filtroAlameda">Mostrar entregas da Alameda</label>
+      <select id="filtroAlameda">
+        <option value="TODAS">Todas as alamedas</option>
+        <option>Amarílis</option>
+        <option>Fênix</option>
+        <option>Plumas</option>
+        <option>Prímulas</option>
+        <option>Caliandras</option>
+        <option>Tulipas</option>
+        <option>Agáves</option>
+        <option>Romãs</option>
+        <option>Seronéas</option>
+        <option>Angelins</option>
+      </select>
+    </div>
+
+    <div class="resumo">
+      <div class="resumo-item"><div class="resumo-numero" id="totalResidencias">0</div><div class="resumo-legenda">Residências</div></div>
+      <div class="resumo-item"><div class="resumo-numero" id="totalPacotes">0</div><div class="resumo-legenda">Pacotes</div></div>
+      <div class="resumo-item"><div class="resumo-numero" id="totalFaltantes">0</div><div class="resumo-legenda">Faltantes</div></div>
+      <div class="resumo-item"><div class="resumo-numero" id="totalTentativas">0</div><div class="resumo-legenda">Tentativas</div></div>
+    </div>
+
+    <div id="listaEntregas"></div>
+    <button class="btn-limpar-concluidas" id="btnLimparConcluidas" type="button">🧹 LIMPAR ENTREGAS CONCLUÍDAS</button>
+    <button class="btn-limpar" id="btnLimpar" type="button">🗑️ LIMPAR TODAS AS ENTREGAS</button>
+  </section>
+
+  </div>
+  <section class="card" id="abaHistorico" hidden aria-labelledby="btnAbrirHistoricoConcluidas">
+
+    <div class="painel-historico" id="painelHistoricoConcluidas">
+    <h2>📚 Histórico de entregas concluídas</h2>
+
+    <div class="campo pesquisa-historico">
+      <label for="pesquisaHistorico">Pesquisar entrega concluída</label>
+      <input id="pesquisaHistorico" type="search" autocomplete="off" placeholder="Casa, alameda ou data">
+    </div>
+
+    <div class="campo">
+      <label for="filtroHistoricoAlameda">Mostrar histórico da Alameda</label>
+      <select id="filtroHistoricoAlameda">
+        <option value="TODAS">Todas as alamedas</option>
+        <option>Amarílis</option>
+        <option>Fênix</option>
+        <option>Plumas</option>
+        <option>Prímulas</option>
+        <option>Caliandras</option>
+        <option>Tulipas</option>
+        <option>Agáves</option>
+        <option>Romãs</option>
+        <option>Seronéas</option>
+        <option>Angelins</option>
+      </select>
+    </div>
+
+    <div id="listaHistoricoConcluidas" class="historico-concluidas"></div>
+    <button class="btn-limpar-historico" id="btnLimparHistorico" type="button">🗑️ LIMPAR HISTÓRICO DE CONCLUÍDAS</button>
+    </div>
+  </section>
+
+  <section class="card" id="abaTentativas" hidden aria-labelledby="btnAbrirTresTentativas">
+    <div class="painel-area" id="painelTresTentativas">
+      <h2>⚠️ Residências com 3 tentativas</h2>
+      <p class="dica">Estas residências não participam mais dos contadores da lista principal.</p>
+      <div id="listaTresTentativas"></div>
+    </div>
+  </section>
+
+  <section class="card" id="abaVolumes" hidden aria-labelledby="btnAbrirVolumes">
+    <div class="painel-area" id="painelVolumes">
+      <h2>📦 Cadastrar volume grande</h2>
+
+      <div class="campo">
+        <label for="volumeAlameda">Alameda</label>
+        <select id="volumeAlameda">
+          <option value="">Selecione a Alameda</option>
+          <option>Amarílis</option><option>Fênix</option><option>Plumas</option><option>Prímulas</option><option>Caliandras</option>
+          <option>Tulipas</option><option>Agáves</option><option>Romãs</option><option>Seronéas</option><option>Angelins</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="volumeNumero">Número da residência</label>
+        <input id="volumeNumero" type="text" inputmode="numeric" autocomplete="off" placeholder="Digite o número">
+      </div>
+
+      <div class="campo">
+        <label for="volumeData">Data da entrega</label>
+        <input id="volumeData" type="date">
+      </div>
+
+      <div class="campo">
+        <label for="volumeObservacao">Observação</label>
+        <textarea id="volumeObservacao" class="observacao-campo" maxlength="250" placeholder="Informações sobre o volume..."></textarea>
+      </div>
+
+      <div class="campo">
+        <label for="volumeFoto">Foto do pacote</label>
+        <input id="volumeFoto" type="file" accept="image/*" capture="environment">
+        <img id="volumeFotoPreview" class="foto-preview" alt="Prévia da foto do pacote">
+        <div class="dica">A imagem será reduzida antes de ser salva neste aparelho.</div>
+      </div>
+
+      <button class="btn-adicionar" id="btnAdicionarVolume" type="button">➕ ADICIONAR VOLUME GRANDE</button>
+
+      <h2 style="margin-top:24px">📋 Volumes cadastrados</h2>
+      <div id="listaVolumes"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+  const CHAVE_STORAGE = "entregaCondo";
+  const CHAVE_HISTORICO_CONCLUIDAS = "entregaCondoHistoricoConcluidas";
+  const CHAVE_VOLUMES_GRANDES = "entregaCondoVolumesGrandes";
+  const UM_DIA_MS = 24 * 60 * 60 * 1000;
+  const RETENCAO_HISTORICO_MS = 30 * UM_DIA_MS;
+  const alamedas = ["Amarílis", "Fênix", "Plumas", "Prímulas", "Caliandras", "Tulipas", "Agáves", "Romãs", "Seronéas", "Angelins"];
+
+  const elAlameda = document.getElementById("alameda");
+  const elNumero = document.getElementById("numero");
+  const elQuantidade = document.getElementById("quantidade");
+  const elFiltro = document.getElementById("filtroAlameda");
+  const elLista = document.getElementById("listaEntregas");
+  const elFiltroHistorico = document.getElementById("filtroHistoricoAlameda");
+  const elListaHistoricoConcluidas = document.getElementById("listaHistoricoConcluidas");
+  const elPesquisaHistorico = document.getElementById("pesquisaHistorico");
+  const elPainelHistorico = document.getElementById("painelHistoricoConcluidas");
+  const elBtnAbrirHistorico = document.getElementById("btnAbrirHistoricoConcluidas");
+  const elPainelTresTentativas = document.getElementById("painelTresTentativas");
+  const elBtnAbrirTresTentativas = document.getElementById("btnAbrirTresTentativas");
+  const elListaTresTentativas = document.getElementById("listaTresTentativas");
+  const elPainelVolumes = document.getElementById("painelVolumes");
+  const elBtnAbrirVolumes = document.getElementById("btnAbrirVolumes");
+  const elVolumeAlameda = document.getElementById("volumeAlameda");
+  const elVolumeNumero = document.getElementById("volumeNumero");
+  const elVolumeData = document.getElementById("volumeData");
+  const elVolumeObservacao = document.getElementById("volumeObservacao");
+  const elVolumeFoto = document.getElementById("volumeFoto");
+  const elVolumeFotoPreview = document.getElementById("volumeFotoPreview");
+  const elListaVolumes = document.getElementById("listaVolumes");
+
+  let entregas = carregarEntregas();
+  let historicoConcluidas = carregarHistoricoConcluidas();
+  let volumesGrandes = carregarVolumesGrandes();
+  let fotoVolumeTemporaria = "";
+
+  function carregarEntregas() {
+    try {
+      const dados = JSON.parse(localStorage.getItem(CHAVE_STORAGE)) || [];
+      return Array.isArray(dados) ? dados.map(normalizarEntrega) : [];
+    } catch (erro) {
+      console.error("Erro ao carregar dados:", erro);
+      return [];
+    }
+  }
+
+  function carregarHistoricoConcluidas() {
+    try {
+      const dados = JSON.parse(localStorage.getItem(CHAVE_HISTORICO_CONCLUIDAS)) || [];
+      return Array.isArray(dados) ? dados : [];
+    } catch (erro) {
+      console.error("Erro ao carregar histórico de concluídas:", erro);
+      return [];
+    }
+  }
+
+  function salvarHistoricoConcluidas() {
+    localStorage.setItem(CHAVE_HISTORICO_CONCLUIDAS, JSON.stringify(historicoConcluidas));
+  }
+
+  function carregarVolumesGrandes() {
+    try {
+      const dados = JSON.parse(localStorage.getItem(CHAVE_VOLUMES_GRANDES)) || [];
+      return Array.isArray(dados) ? dados.map(normalizarVolumeGrande) : [];
+    } catch (erro) {
+      console.error("Erro ao carregar volumes grandes:", erro);
+      return [];
+    }
+  }
+
+  function normalizarVolumeGrande(item) {
+    return {
+      id: Number(item.id) || Date.now() + Math.floor(Math.random() * 10000),
+      alameda: String(item.alameda || ""),
+      numero: String(item.numero || ""),
+      dataEntrega: String(item.dataEntrega || ""),
+      observacao: String(item.observacao || ""),
+      foto: String(item.foto || ""),
+      entregue: Boolean(item.entregue),
+      concluidaTimestamp: Number(item.concluidaTimestamp) || 0,
+      criadoTimestamp: Number(item.criadoTimestamp) || Date.now()
+    };
+  }
+
+  function salvarVolumesGrandes() {
+    try {
+      localStorage.setItem(CHAVE_VOLUMES_GRANDES, JSON.stringify(volumesGrandes));
+      return true;
+    } catch (erro) {
+      console.error("Erro ao salvar volumes grandes:", erro);
+      alert("Não foi possível salvar. O armazenamento deste aparelho pode estar cheio. Remova alguma foto ou volume antigo e tente novamente.");
+      return false;
+    }
+  }
+
+  function normalizarEntrega(item) {
+    return {
+      id: Number(item.id) || Date.now() + Math.floor(Math.random() * 10000),
+      alameda: String(item.alameda || ""),
+      numero: String(item.numero || ""),
+      pacotes: Math.max(1, Number(item.pacotes) || 1),
+      tentativas: Math.max(0, Number(item.tentativas) || 0),
+      historico: Array.isArray(item.historico) ? item.historico : [],
+      observacao: String(item.observacao || ""),
+      entregue: Boolean(item.entregue),
+      concluidaTimestamp: Number(item.concluidaTimestamp) || 0
+    };
+  }
+
+  function inicioDoDia(timestamp = Date.now()) {
+    const data = new Date(timestamp);
+    return new Date(data.getFullYear(), data.getMonth(), data.getDate()).getTime();
+  }
+
+  function teveTentativaHoje(entrega) {
+    if (!Array.isArray(entrega.historico) || entrega.historico.length === 0) return false;
+
+    const hojeInicio = inicioDoDia();
+    const hojeTexto = new Date().toLocaleDateString("pt-BR");
+
+    return entrega.historico.some(tentativa => {
+      const timestamp = Number(tentativa.timestamp);
+      if (timestamp > 0) return inicioDoDia(timestamp) === hojeInicio;
+
+      // Compatibilidade com tentativas registradas antes de existir o timestamp.
+      return String(tentativa.data || "") === hojeTexto;
+    });
+  }
+
+  function fazerManutencaoAutomatica() {
+    arquivarVolumesConcluidos();
+    const agora = Date.now();
+    const hoje = inicioDoDia(agora);
+    const totalEntregas = entregas.length;
+    const totalHistorico = historicoConcluidas.length;
+
+    // Concluídas continuam visíveis até o fim do dia e depois saem apenas da lista ativa.
+    entregas = entregas.filter(item => {
+      if (!item.entregue) return true;
+      const concluidaEm = Number(item.concluidaTimestamp) || agora;
+      return inicioDoDia(concluidaEm) >= hoje;
+    });
+
+    // O histórico separado permanece por 30 dias.
+    historicoConcluidas = historicoConcluidas.filter(item => {
+      const timestamp = Number(item.timestamp);
+      return timestamp > 0 && agora - timestamp < RETENCAO_HISTORICO_MS;
+    });
+
+    if (entregas.length !== totalEntregas) salvar();
+    if (historicoConcluidas.length !== totalHistorico) salvarHistoricoConcluidas();
+  }
+
+  function salvar() {
+    localStorage.setItem(CHAVE_STORAGE, JSON.stringify(entregas));
+  }
+
+  function adicionarEntrega() {
+    const alameda = elAlameda.value;
+    const numero = elNumero.value.trim().toUpperCase();
+    const quantidade = Number(elQuantidade.value);
+
+    if (!alameda) {
+      alert("Selecione uma Alameda.");
+      elAlameda.focus();
+      return;
+    }
+
+    if (!numero) {
+      alert("Digite o número da residência.");
+      elNumero.focus();
+      return;
+    }
+
+    if (!Number.isInteger(quantidade) || quantidade < 1) {
+      alert("Digite uma quantidade válida de pacotes.");
+      elQuantidade.focus();
+      return;
+    }
+
+    const existente = entregas.find(item =>
+      item.alameda === alameda && item.numero.toUpperCase() === numero
+    );
+
+    if (existente) {
+      if (!existente.entregue && existente.tentativas > 0) {
+        const confirmar = confirm(
+          `ATENÇÃO: a entrega da casa ${numero}, Alameda ${alameda}, está pendente e já possui ${existente.tentativas} ${existente.tentativas === 1 ? "tentativa registrada" : "tentativas registradas"}.\n\nDeseja realmente adicionar mais ${quantidade} ${quantidade === 1 ? "pacote" : "pacotes"} a essa entrega?`
+        );
+        if (!confirmar) return;
+      }
+      existente.pacotes += quantidade;
+      existente.entregue = false;
+      existente.concluidaTimestamp = 0;
+    } else {
+      entregas.push({
+        id: Date.now(),
+        alameda,
+        numero,
+        pacotes: quantidade,
+        tentativas: 0,
+        historico: [],
+        observacao: "",
+        entregue: false,
+        concluidaTimestamp: 0
+      });
+    }
+
+    salvar();
+
+    // Ao cadastrar, já mostra a Alameda usada. Isso agiliza a conferência no celular.
+    elFiltro.value = alameda;
+
+    elNumero.value = "";
+    elQuantidade.value = "1";
+    renderizar();
+    elNumero.focus();
+  }
+
+  function compararNumeros(a, b) {
+    return String(a.numero).localeCompare(String(b.numero), "pt-BR", {
+      numeric: true,
+      sensitivity: "base"
+    });
+  }
+
+  function obterEntrega(id) {
+    return entregas.find(item => item.id === Number(id));
+  }
+
+  function aumentar(id) {
+    const entrega = obterEntrega(id);
+    if (!entrega) return;
+    entrega.pacotes += 1;
+    entrega.entregue = false;
+    entrega.concluidaTimestamp = 0;
+    salvar();
+    renderizar();
+  }
+
+  function diminuir(id) {
+    const entrega = obterEntrega(id);
+    if (!entrega) return;
+
+    entrega.pacotes -= 1;
+
+    if (entrega.pacotes <= 0) {
+      const confirmar = confirm("Remover esta residência da lista de entregas?");
+      if (!confirmar) {
+        entrega.pacotes = 1;
+      } else {
+        entregas = entregas.filter(item => item.id !== entrega.id);
+      }
+    }
+
+    salvar();
+    renderizar();
+  }
+
+  function adicionarTentativa(id) {
+    const entrega = obterEntrega(id);
+    if (!entrega) return;
+
+    entrega.tentativas = Math.max(0, Number(entrega.tentativas) || 0) + 1;
+    if (!Array.isArray(entrega.historico)) entrega.historico = [];
+
+    const agora = new Date();
+    entrega.historico.push({
+      numero: entrega.tentativas,
+      data: agora.toLocaleDateString("pt-BR"),
+      hora: agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+      timestamp: agora.getTime()
+    });
+
+    entrega.entregue = false;
+    salvar();
+    renderizar();
+
+    if (entrega.tentativas >= 3) {
+      abrirAba("abaTentativas");
+    }
+  }
+
+  function concluirEntrega(id) {
+    const entrega = obterEntrega(id);
+    if (!entrega) return;
+
+    if (!entrega.entregue) {
+      const agora = new Date();
+      historicoConcluidas.unshift({
+        id: Date.now(),
+        entregaId: entrega.id,
+        alameda: entrega.alameda,
+        numero: entrega.numero,
+        pacotes: entrega.pacotes,
+        tentativas: entrega.tentativas || 0,
+        observacao: entrega.observacao || "",
+        data: agora.toLocaleDateString("pt-BR"),
+        hora: agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+        timestamp: agora.getTime()
+      });
+      entrega.entregue = true;
+      entrega.concluidaTimestamp = agora.getTime();
+      salvarHistoricoConcluidas();
+    } else {
+      entrega.entregue = false;
+      entrega.concluidaTimestamp = 0;
+    }
+
+    salvar();
+    renderizar();
+    renderizarHistoricoConcluidas();
+  }
+
+  function alternarHistorico(id) {
+    const elemento = document.getElementById(`historico-${id}`);
+    const botao = document.getElementById(`btn-historico-${id}`);
+    if (!elemento) return;
+
+    const abriu = elemento.classList.toggle("aberto");
+    if (botao) botao.textContent = abriu ? "📅 OCULTAR HISTÓRICO" : "📅 VER HISTÓRICO";
+  }
+
+  function alternarObservacao(id) {
+    const elemento = document.getElementById(`observacao-${id}`);
+    const botao = document.getElementById(`btn-observacao-${id}`);
+    if (!elemento) return;
+
+    const abriu = elemento.classList.toggle("aberto");
+    if (botao) botao.textContent = abriu ? "📝 OCULTAR OBSERVAÇÃO" : "📝 OBSERVAÇÃO";
+    if (abriu) elemento.querySelector("textarea")?.focus();
+  }
+
+  function salvarObservacao(id) {
+    const entrega = obterEntrega(id);
+    const campo = document.getElementById(`campo-observacao-${id}`);
+    if (!entrega || !campo) return;
+    entrega.observacao = campo.value;
+    salvar();
+
+    // Se a entrega já estiver concluída, mantém o registro correspondente do histórico sincronizado.
+    if (entrega.entregue) {
+      const registro = historicoConcluidas.find(item =>
+        Number(item.entregaId) === entrega.id &&
+        Number(item.timestamp) === entrega.concluidaTimestamp
+      );
+      if (registro) {
+        registro.observacao = entrega.observacao;
+        salvarHistoricoConcluidas();
+        renderizarHistoricoConcluidas();
+      }
+    }
+  }
+
+  function escaparHTML(valor) {
+    return String(valor)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function formatarDataISO(valor) {
+    const partes = String(valor || "").split("-");
+    if (partes.length !== 3) return String(valor || "");
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+  }
+
+  function comprimirFoto(arquivo) {
+    return new Promise((resolve, reject) => {
+      if (!arquivo || !arquivo.type.startsWith("image/")) {
+        reject(new Error("Selecione uma imagem válida."));
+        return;
+      }
+
+      const leitor = new FileReader();
+      leitor.onerror = () => reject(new Error("Não foi possível ler a imagem."));
+      leitor.onload = () => {
+        const imagem = new Image();
+        imagem.onerror = () => reject(new Error("Não foi possível abrir a imagem."));
+        imagem.onload = () => {
+          const limite = 900;
+          const proporcao = Math.min(1, limite / Math.max(imagem.width, imagem.height));
+          const largura = Math.max(1, Math.round(imagem.width * proporcao));
+          const altura = Math.max(1, Math.round(imagem.height * proporcao));
+          const canvas = document.createElement("canvas");
+          canvas.width = largura;
+          canvas.height = altura;
+          const contexto = canvas.getContext("2d");
+          contexto.drawImage(imagem, 0, 0, largura, altura);
+          resolve(canvas.toDataURL("image/jpeg", 0.65));
+        };
+        imagem.src = leitor.result;
+      };
+      leitor.readAsDataURL(arquivo);
+    });
+  }
+
+  async function prepararFotoVolume(evento) {
+    const arquivo = evento.target.files?.[0];
+    if (!arquivo) {
+      fotoVolumeTemporaria = "";
+      elVolumeFotoPreview.removeAttribute("src");
+      elVolumeFotoPreview.classList.remove("visivel");
+      return;
+    }
+
+    try {
+      fotoVolumeTemporaria = await comprimirFoto(arquivo);
+      elVolumeFotoPreview.src = fotoVolumeTemporaria;
+      elVolumeFotoPreview.classList.add("visivel");
+    } catch (erro) {
+      alert(erro.message);
+      elVolumeFoto.value = "";
+    }
+  }
+
+  function adicionarVolumeGrande() {
+    const alameda = elVolumeAlameda.value;
+    const numero = elVolumeNumero.value.trim().toUpperCase();
+    const dataEntrega = elVolumeData.value;
+    const observacao = elVolumeObservacao.value.trim();
+
+    if (!alameda) {
+      alert("Selecione a Alameda do volume grande.");
+      elVolumeAlameda.focus();
+      return;
+    }
+    if (!numero) {
+      alert("Digite o número da residência.");
+      elVolumeNumero.focus();
+      return;
+    }
+    if (!dataEntrega) {
+      alert("Informe a data da entrega.");
+      elVolumeData.focus();
+      return;
+    }
+
+    const novoVolume = {
+      id: Date.now(),
+      alameda,
+      numero,
+      dataEntrega,
+      observacao,
+      foto: fotoVolumeTemporaria,
+      entregue: false,
+      concluidaTimestamp: 0,
+      criadoTimestamp: Date.now()
+    };
+
+    volumesGrandes.unshift(novoVolume);
+    if (!salvarVolumesGrandes()) {
+      volumesGrandes = volumesGrandes.filter(item => item.id !== novoVolume.id);
+      return;
+    }
+
+    elVolumeNumero.value = "";
+    elVolumeObservacao.value = "";
+    elVolumeFoto.value = "";
+    fotoVolumeTemporaria = "";
+    elVolumeFotoPreview.removeAttribute("src");
+    elVolumeFotoPreview.classList.remove("visivel");
+    renderizarVolumesGrandes();
+    elVolumeNumero.focus();
+  }
+
+  function obterVolumeGrande(id) {
+    return volumesGrandes.find(item => item.id === Number(id));
+  }
+
+  function concluirVolumeGrande(id) {
+    const volume = obterVolumeGrande(id);
+    if (!volume) return;
+    const anterior = { ...volume };
+    volume.entregue = true;
+    volume.concluidaTimestamp = Date.now();
+    if (!arquivarVolumesConcluidos()) Object.assign(volume, anterior);
+    renderizarVolumesGrandes();
+    renderizarHistoricoConcluidas();
+  }
+
+  // Grava primeiro o histórico; só então remove a cópia da aba de volumes.
+  // Também migra volumes concluídos na versão anterior sem renovar seu prazo.
+  function arquivarVolumesConcluidos() {
+    const concluidos = volumesGrandes.filter(item => item.entregue);
+    if (!concluidos.length) return true;
+    const agora = Date.now();
+    const novoHistorico = historicoConcluidas.slice();
+    for (const volume of concluidos) {
+      const timestamp = volume.concluidaTimestamp || volume.criadoTimestamp;
+      if (!(timestamp > 0)) return false;
+      if (agora - timestamp >= RETENCAO_HISTORICO_MS) continue;
+      if (novoHistorico.some(item => item.tipo === "volumeGrande" && item.volumeId === volume.id)) continue;
+      const data = new Date(timestamp);
+      novoHistorico.unshift({
+        id: `volume-${volume.id}`, tipo: "volumeGrande", volumeId: volume.id,
+        alameda: volume.alameda, numero: volume.numero, pacotes: 1,
+        observacao: volume.observacao, foto: volume.foto,
+        dataEntrega: volume.dataEntrega, timestamp,
+        data: data.toLocaleDateString("pt-BR"),
+        hora: data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+      });
+    }
+    const pendentes = volumesGrandes.filter(item => !item.entregue);
+    try {
+      localStorage.setItem(CHAVE_HISTORICO_CONCLUIDAS, JSON.stringify(novoHistorico));
+    } catch (erro) {
+      alert("Não foi possível arquivar o volume. Os dados foram mantidos; libere espaço e tente novamente.");
+      return false;
+    }
+    historicoConcluidas = novoHistorico;
+    try {
+      localStorage.setItem(CHAVE_VOLUMES_GRANDES, JSON.stringify(pendentes));
+      volumesGrandes = pendentes;
+    } catch (erro) {
+      // O histórico já está seguro. Uma nova manutenção tentará remover a cópia.
+      console.error("Não foi possível limpar a cópia do volume:", erro);
+    }
+    return true;
+  }
+
+  function salvarObservacaoVolume(id) {
+    const volume = obterVolumeGrande(id);
+    const campo = document.getElementById(`campo-observacao-volume-${id}`);
+    if (!volume || !campo) return;
+    volume.observacao = campo.value;
+    salvarVolumesGrandes();
+  }
+
+  function salvarDataVolume(id) {
+    const volume = obterVolumeGrande(id);
+    const campo = document.getElementById(`campo-data-volume-${id}`);
+    if (!volume || !campo || !campo.value) return;
+    volume.dataEntrega = campo.value;
+    salvarVolumesGrandes();
+    renderizarVolumesGrandes();
+  }
+
+  function alternarObservacaoVolume(id) {
+    const area = document.getElementById(`observacao-volume-${id}`);
+    if (!area) return;
+    const abriu = area.classList.toggle("aberto");
+    if (abriu) area.querySelector("textarea")?.focus();
+  }
+
+  async function alterarFotoVolume(id, evento) {
+    const volume = obterVolumeGrande(id);
+    const arquivo = evento.target.files?.[0];
+    if (!volume || !arquivo) return;
+    const fotoAnterior = volume.foto;
+
+    try {
+      volume.foto = await comprimirFoto(arquivo);
+      if (!salvarVolumesGrandes()) volume.foto = fotoAnterior;
+      renderizarVolumesGrandes();
+    } catch (erro) {
+      alert(erro.message);
+    }
+  }
+
+  function removerFotoVolume(id) {
+    const volume = obterVolumeGrande(id);
+    if (!volume || !volume.foto) return;
+    if (!confirm("Remover a foto deste volume?")) return;
+    volume.foto = "";
+    salvarVolumesGrandes();
+    renderizarVolumesGrandes();
+  }
+
+  function removerVolumeGrande(id) {
+    const volume = obterVolumeGrande(id);
+    if (!volume) return;
+    if (!confirm(`Remover o volume grande da casa ${volume.numero}, Alameda ${volume.alameda}?`)) return;
+    volumesGrandes = volumesGrandes.filter(item => item.id !== volume.id);
+    salvarVolumesGrandes();
+    renderizarVolumesGrandes();
+  }
+
+  function renderizarVolumesGrandes() {
+    elListaVolumes.innerHTML = "";
+    const lista = volumesGrandes.filter(item => !item.entregue).sort((a, b) => {
+      if (a.entregue !== b.entregue) return Number(a.entregue) - Number(b.entregue);
+      return (Number(b.criadoTimestamp) || 0) - (Number(a.criadoTimestamp) || 0);
+    });
+
+    if (lista.length === 0) {
+      elListaVolumes.innerHTML = '<div class="vazio">Nenhum volume grande cadastrado.</div>';
+      return;
+    }
+
+    lista.forEach(volume => {
+      const div = document.createElement("div");
+      div.className = "volume-item" + (volume.entregue ? " finalizada" : "");
+      div.innerHTML = `
+        <div class="numero">🏠 ${escaparHTML(volume.numero)}</div>
+        <div class="conclusao-alameda">${escaparHTML(volume.alameda)}</div>
+        <div class="volume-data">📅 Data da entrega: ${escaparHTML(formatarDataISO(volume.dataEntrega))}</div>
+        ${volume.entregue ? '<div class="concluida">✓ VOLUME ENTREGUE</div>' : ""}
+        ${volume.foto ? `<img class="volume-foto" src="${volume.foto}" alt="Foto do volume da casa ${escaparHTML(volume.numero)}">` : '<div class="dica" style="margin-top:10px">Sem foto cadastrada.</div>'}
+        <div class="campo" style="margin-top:10px">
+          <label for="campo-data-volume-${volume.id}">Alterar data da entrega</label>
+          <input id="campo-data-volume-${volume.id}" type="date" value="${escaparHTML(volume.dataEntrega)}" onchange="salvarDataVolume(${volume.id})">
+        </div>
+        <label class="btn-foto" for="foto-volume-${volume.id}">📷 ${volume.foto ? "TROCAR FOTO" : "ADICIONAR FOTO"}</label>
+        <input id="foto-volume-${volume.id}" type="file" accept="image/*" capture="environment" style="display:none" onchange="alterarFotoVolume(${volume.id}, event)">
+        ${volume.foto ? `<button class="btn-historico" type="button" onclick="removerFotoVolume(${volume.id})">REMOVER FOTO</button>` : ""}
+        <button class="btn-observacao" type="button" onclick="alternarObservacaoVolume(${volume.id})">📝 OBSERVAÇÃO${volume.observacao ? " •" : ""}</button>
+        <div class="observacao-area" id="observacao-volume-${volume.id}">
+          <textarea class="observacao-campo" id="campo-observacao-volume-${volume.id}" maxlength="250" placeholder="Digite uma observação..." oninput="salvarObservacaoVolume(${volume.id})">${escaparHTML(volume.observacao)}</textarea>
+        </div>
+        <button class="btn-concluir ${volume.entregue ? "btn-reabrir" : ""}" type="button" onclick="concluirVolumeGrande(${volume.id})">${volume.entregue ? "↩ REABRIR VOLUME" : "✓ CONCLUIR ENTREGA"}</button>
+        <button class="btn-remover" type="button" onclick="removerVolumeGrande(${volume.id})">🗑️ REMOVER VOLUME</button>`;
+      elListaVolumes.appendChild(div);
+    });
+  }
+
+  function alternarVolumesGrandes() {
+    abrirAba("abaVolumes");
+  }
+
+  function abrirAba(destino) {
+    const abas = {
+      abaEntregas: "btnAbaEntregas",
+      abaHistorico: "btnAbrirHistoricoConcluidas",
+      abaTentativas: "btnAbrirTresTentativas",
+      abaVolumes: "btnAbrirVolumes"
+    };
+    if (!Object.prototype.hasOwnProperty.call(abas, destino)) return;
+    fazerManutencaoAutomatica();
+    // Atualiza só as listas: os campos de cadastro e a foto em preparação são preservados.
+    renderizar();
+    renderizarHistoricoConcluidas();
+    renderizarVolumesGrandes();
+    Object.entries(abas).forEach(([painel, botao]) => {
+      const ativo = painel === destino;
+      document.getElementById(painel).hidden = !ativo;
+      document.getElementById(botao).setAttribute("aria-pressed", String(ativo));
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function criarBlocoAlameda(lista, alameda, entregasAlameda, limiteTentativas = false) {
+    const titulo = document.createElement("div");
+    titulo.className = "titulo-alameda";
+    titulo.textContent = alameda;
+    lista.appendChild(titulo);
+
+    entregasAlameda.sort(compararNumeros).forEach(entrega => {
+      const div = document.createElement("div");
+      div.className = "entrega" + (entrega.entregue ? " finalizada" : "");
+
+      const numeroSeguro = escaparHTML(entrega.numero);
+      const observacaoSegura = escaparHTML(entrega.observacao || "");
+      let historicoHTML = "";
+
+      if (entrega.historico.length > 0) {
+        historicoHTML = `
+          <button class="btn-historico" id="btn-historico-${entrega.id}" type="button" onclick="alternarHistorico(${entrega.id})">📅 VER HISTÓRICO</button>
+          <div class="historico" id="historico-${entrega.id}">
+            <div class="historico-titulo">Histórico de tentativas</div>
+            ${entrega.historico.map(t => `
+              <div class="historico-item">🔄 Tentativa <strong>${t.numero}</strong> — ${escaparHTML(t.data)} às ${escaparHTML(t.hora)}</div>
+            `).join("")}
+          </div>`;
+      }
+
+      const tentativasHTML = entrega.tentativas > 0
+        ? `<div class="tentativas">🔄 ${entrega.tentativas} ${entrega.tentativas === 1 ? "tentativa" : "tentativas"}</div>`
+        : "";
+
+      const statusHTML = entrega.entregue
+        ? `<div class="concluida">✓ ENTREGA CONCLUÍDA</div>`
+        : "";
+
+      const limiteHTML = limiteTentativas && !entrega.entregue
+        ? `<div class="aviso-limite">⚠️ LIMITE DE 3 TENTATIVAS ATINGIDO</div>`
+        : "";
+
+      const acoesHTML = entrega.entregue
+        ? `<button class="btn-concluir btn-reabrir" type="button" onclick="concluirEntrega(${entrega.id})">↩ REABRIR ENTREGA</button>`
+        : `
+          <div class="acoes">
+            <button class="btn-menor btn-menos" type="button" onclick="diminuir(${entrega.id})" aria-label="Diminuir pacotes">−</button>
+            <button class="btn-menor btn-mais" type="button" onclick="aumentar(${entrega.id})" aria-label="Aumentar pacotes">+</button>
+            ${limiteTentativas ? "" : `<button class="btn-tentativa" type="button" onclick="adicionarTentativa(${entrega.id})">🔄 REGISTRAR TENTATIVA</button>`}
+          </div>
+          <button class="btn-concluir" type="button" onclick="concluirEntrega(${entrega.id})">✓ CONCLUIR ENTREGA</button>`;
+
+      div.innerHTML = `
+        <div class="numero">🏠 ${numeroSeguro}</div>
+        <div class="pacotes">📦 ${entrega.pacotes} ${entrega.pacotes === 1 ? "pacote" : "pacotes"}</div>
+        ${tentativasHTML}
+        ${statusHTML}
+        ${limiteHTML}
+        ${acoesHTML}
+        <button class="btn-observacao" id="btn-observacao-${entrega.id}" type="button" onclick="alternarObservacao(${entrega.id})">📝 OBSERVAÇÃO${entrega.observacao ? " •" : ""}</button>
+        <div class="observacao-area" id="observacao-${entrega.id}">
+          <textarea class="observacao-campo" id="campo-observacao-${entrega.id}" maxlength="250" placeholder="Digite uma observação..." oninput="salvarObservacao(${entrega.id})">${observacaoSegura}</textarea>
+        </div>
+        ${historicoHTML}`;
+
+      lista.appendChild(div);
+    });
+  }
+
+  function atualizarResumo(lista) {
+    document.getElementById("totalResidencias").textContent = lista.length;
+    document.getElementById("totalPacotes").textContent = lista.reduce((total, item) => total + item.pacotes, 0);
+    document.getElementById("totalFaltantes").textContent = lista.filter(item =>
+      !item.entregue && !teveTentativaHoje(item)
+    ).length;
+    document.getElementById("totalTentativas").textContent = lista.reduce((total, item) => total + (item.tentativas || 0), 0);
+  }
+
+  function renderizar() {
+    const filtro = elFiltro.value;
+    const filtradas = entregas.filter(item =>
+      item.tentativas < 3 && (filtro === "TODAS" || item.alameda === filtro)
+    );
+
+    elLista.innerHTML = "";
+    atualizarResumo(filtradas);
+
+    if (filtradas.length === 0) {
+      elLista.innerHTML = '<div class="vazio">Nenhuma entrega encontrada.</div>';
+    } else if (filtro === "TODAS") {
+      alamedas.forEach(alameda => {
+        const daAlameda = filtradas.filter(item => item.alameda === alameda);
+        if (daAlameda.length > 0) criarBlocoAlameda(elLista, alameda, daAlameda);
+      });
+    } else {
+      criarBlocoAlameda(elLista, filtro, filtradas);
+    }
+
+    renderizarTresTentativas();
+  }
+
+  function atualizarBotaoTresTentativas() {
+    const quantidade = entregas.filter(item => item.tentativas >= 3).length;
+    elBtnAbrirTresTentativas.textContent = `⚠️ 3 tentativas (${quantidade})`;
+  }
+
+  function renderizarTresTentativas() {
+    const lista = entregas.filter(item => item.tentativas >= 3);
+    elListaTresTentativas.innerHTML = "";
+    atualizarBotaoTresTentativas();
+
+    if (lista.length === 0) {
+      elListaTresTentativas.innerHTML = '<div class="vazio">Nenhuma residência atingiu 3 tentativas.</div>';
+      return;
+    }
+
+    alamedas.forEach(alameda => {
+      const daAlameda = lista.filter(item => item.alameda === alameda);
+      if (daAlameda.length > 0) criarBlocoAlameda(elListaTresTentativas, alameda, daAlameda, true);
+    });
+  }
+
+  function alternarTresTentativas() {
+    abrirAba("abaTentativas");
+  }
+
+  function renderizarHistoricoConcluidas() {
+    const filtro = elFiltroHistorico.value;
+    const pesquisa = elPesquisaHistorico.value.trim().toLocaleLowerCase("pt-BR");
+    const lista = historicoConcluidas
+      .filter(item => filtro === "TODAS" || item.alameda === filtro)
+      .filter(item => {
+        if (!pesquisa) return true;
+        const texto = `${item.numero || ""} ${item.alameda || ""} ${item.data || ""} ${item.hora || ""} ${item.observacao || ""}`.toLocaleLowerCase("pt-BR");
+        return texto.includes(pesquisa);
+      })
+      .slice()
+      .sort((a, b) => (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0));
+
+    elListaHistoricoConcluidas.innerHTML = "";
+
+    if (lista.length === 0) {
+      elListaHistoricoConcluidas.innerHTML = '<div class="vazio">Nenhuma entrega concluída no histórico.</div>';
+      return;
+    }
+
+    lista.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "conclusao-item";
+      div.innerHTML = `
+        <div class="conclusao-casa">🏠 Casa ${escaparHTML(item.numero)}</div>
+        <div class="conclusao-alameda">${escaparHTML(item.alameda)}</div>
+        ${item.tipo === "volumeGrande"
+          ? `<div class="conclusao-meta">📦 VOLUME GRANDE</div><div class="volume-data">Data informada: ${escaparHTML(formatarDataISO(item.dataEntrega))}</div>`
+          : `<div class="conclusao-meta">📦 ${Number(item.pacotes) || 0} pacotes · 🔄 ${Number(item.tentativas) || 0} tentativas</div>`}
+        ${item.tipo === "volumeGrande" && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(item.foto || "") ? `<details><summary>📷 Ver foto do volume</summary><img class="volume-foto" src="${escaparHTML(item.foto)}" alt="Foto do volume entregue" loading="lazy"></details>` : ""}
+        ${item.observacao ? `<div class="observacao-salva">📝 ${escaparHTML(item.observacao)}</div>` : ""}
+        <div class="conclusao-data">✓ Concluída em ${escaparHTML(item.data || "")} às ${escaparHTML(item.hora || "")}</div>`;
+      elListaHistoricoConcluidas.appendChild(div);
+    });
+  }
+
+  function alternarHistoricoConcluidas() {
+    abrirAba("abaHistorico");
+  }
+
+  function limparHistoricoConcluidas() {
+    if (historicoConcluidas.length === 0) return;
+    if (!confirm("Tem certeza que deseja apagar o histórico de entregas concluídas?")) return;
+    historicoConcluidas = [];
+    salvarHistoricoConcluidas();
+    renderizarHistoricoConcluidas();
+  }
+
+  function limparEntregasConcluidas() {
+    const quantidadeConcluidas = entregas.filter(item => item.entregue).length;
+
+    if (quantidadeConcluidas === 0) {
+      alert("Não há entregas concluídas para limpar.");
+      return;
+    }
+
+    const confirmar = confirm(
+      `Remover ${quantidadeConcluidas} ${quantidadeConcluidas === 1 ? "entrega concluída" : "entregas concluídas"} da lista?\n\nO histórico das entregas será mantido.`
+    );
+    if (!confirmar) return;
+
+    entregas = entregas.filter(item => !item.entregue);
+    salvar();
+    renderizar();
+  }
+
+  function limparTudo() {
+    if (entregas.length === 0) return;
+    if (!confirm("Tem certeza que deseja apagar TODAS as entregas?")) return;
+    entregas = [];
+    salvar();
+    renderizar();
+  }
+
+  document.getElementById("btnAdicionar").addEventListener("click", adicionarEntrega);
+  document.getElementById("btnLimparConcluidas").addEventListener("click", limparEntregasConcluidas);
+  document.getElementById("btnLimpar").addEventListener("click", limparTudo);
+  document.getElementById("btnLimparHistorico").addEventListener("click", limparHistoricoConcluidas);
+  elBtnAbrirHistorico.addEventListener("click", alternarHistoricoConcluidas);
+  document.getElementById("btnAbaEntregas").addEventListener("click", () => abrirAba("abaEntregas"));
+  elBtnAbrirTresTentativas.addEventListener("click", alternarTresTentativas);
+  elBtnAbrirVolumes.addEventListener("click", alternarVolumesGrandes);
+  document.getElementById("btnAdicionarVolume").addEventListener("click", adicionarVolumeGrande);
+  elVolumeFoto.addEventListener("change", prepararFotoVolume);
+  elAlameda.addEventListener("change", () => {
+    if (!elAlameda.value) return;
+    elFiltro.value = elAlameda.value;
+    renderizar();
+  });
+  elFiltro.addEventListener("change", renderizar);
+  elFiltroHistorico.addEventListener("change", renderizarHistoricoConcluidas);
+  elPesquisaHistorico.addEventListener("input", renderizarHistoricoConcluidas);
+  elNumero.addEventListener("keydown", event => {
+    if (event.key === "Enter") adicionarEntrega();
+  });
+
+  // PWA: instalação e funcionamento offline
+  let eventoInstalacao = null;
+  const btnInstalar = document.getElementById("btnInstalar");
+
+  window.addEventListener("beforeinstallprompt", event => {
+    event.preventDefault();
+    eventoInstalacao = event;
+    btnInstalar.classList.add("visivel");
+  });
+
+  btnInstalar.addEventListener("click", async () => {
+    if (!eventoInstalacao) return;
+    eventoInstalacao.prompt();
+    await eventoInstalacao.userChoice;
+    eventoInstalacao = null;
+    btnInstalar.classList.remove("visivel");
+  });
+
+  window.addEventListener("appinstalled", () => {
+    eventoInstalacao = null;
+    btnInstalar.classList.remove("visivel");
+  });
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(error => {
+        console.error("Falha ao registrar Service Worker:", error);
+      });
+    });
+  }
+
+  fazerManutencaoAutomatica();
+  if (!elVolumeData.value) {
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+    const dia = String(hoje.getDate()).padStart(2, "0");
+    elVolumeData.value = `${ano}-${mes}-${dia}`;
+  }
+  renderizar();
+  renderizarHistoricoConcluidas();
+  renderizarVolumesGrandes();
+
+  // Repete a manutenção quando o app volta ao primeiro plano e logo após cada virada de dia.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+    fazerManutencaoAutomatica();
+    renderizar();
+    renderizarHistoricoConcluidas();
+  });
+
+  const milissegundosAteAmanha = inicioDoDia(Date.now() + UM_DIA_MS) - Date.now() + 1000;
+  setTimeout(() => {
+    fazerManutencaoAutomatica();
+    renderizar();
+    renderizarHistoricoConcluidas();
+    setInterval(() => {
+      fazerManutencaoAutomatica();
+      renderizar();
+      renderizarHistoricoConcluidas();
+    }, UM_DIA_MS);
+  }, milissegundosAteAmanha);
+</script>
+</body>
+</html>
