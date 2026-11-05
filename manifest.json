@@ -1,6 +1,6 @@
 {
-  "name": "EntregaCondo",
-  "short_name": "EntregaCondo",
+  "name": "EntregasBarcelona",
+  "short_name": "EntregasBarcelona",
   "description": "Controle móvel de entregas por alameda",
   "start_url": "./index.html",
   "scope": "./",
